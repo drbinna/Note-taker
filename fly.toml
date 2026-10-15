@@ -1,0 +1,41 @@
+# Fly.io config for the notetaker bot.
+# Change `app` to a name of your own before the first `fly launch` / `fly deploy` (it must be globally unique).
+app = "goblin-notetaker"
+primary_region = "dfw"   # Dallas, the closest region to Tulsa
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  PROFILE_DIR = "/data/profile"
+  OUTPUT_DIR = "/data/meetings"
+  HEADLESS = "false"
+  BOT_NAME = "Goblin Notetaker"
+
+# Bot login profile + recordings/summaries survive deploys and restarts.
+[mounts]
+  source = "notetaker_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # A bot sitting in a meeting gets no HTTP traffic, so Fly's default idle shutdown
+  # would kill it mid-call. Keep the machine always on.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+# Roughly 1 GB of RAM per concurrent meeting (Chrome), plus headroom.
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory = "2gb"

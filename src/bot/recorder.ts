@@ -49,7 +49,8 @@ export async function recordMeeting(url: string, workDir: string, opts: JoinOpti
   const out = fs.createWriteStream(audioPath);
   let bytes = 0;
 
-  const context = await launchBrowser();
+  const browser = await launchBrowser();
+  const { context } = browser;
   const participants = new Set<string>();
   let endReason = 'unknown';
   const startedAt = new Date();
@@ -96,7 +97,7 @@ export async function recordMeeting(url: string, workDir: string, opts: JoinOpti
     await frame.evaluate(() => (window as any).__notetaker?.stop()).catch(() => {});
     await platform.leave(page).catch(() => {});
   } finally {
-    await context.close().catch(() => {});
+    await browser.close();
     await new Promise<void>((r) => out.end(() => r()));
   }
 

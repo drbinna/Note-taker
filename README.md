@@ -71,18 +71,86 @@ curl -X POST http://HOST:8080/join \
 curl -H "Authorization: Bearer $SERVER_TOKEN" http://HOST:8080/jobs
 ```
 
-Each `/join` starts its own browser, so several meetings can run at once. Budget roughly 1 vCPU and 1 GB of RAM per concurrent meeting.
+Each `/join` starts its own browser on a temporary copy of the bot's login profile, so several meetings can run at once. Budget roughly 1 vCPU and 1 GB of RAM per concurrent meeting.
 
-### Deploying
+## Deploy on Fly.io
 
-This needs a long-running machine with a real (virtual) display, so **Vercel and other serverless hosts won't work**. Good options are a small VPS (Hetzner, DigitalOcean), Fly.io, or Railway, using the Dockerfile:
+The bot needs a long-running machine with a (virtual) display, so serverless hosts like Vercel won't work. Fly runs the Dockerfile as an always-on machine. The included `fly.toml` uses the Dallas region with 2 shared CPUs and 2 GB RAM (about two meetings at once), plus a volume at `/data` for the bot's login and the saved notes. It also **turns off Fly's idle auto-stop**, which would otherwise shut the machine down mid-meeting, since a bot in a call gets no web traffic.
+
+### First deploy
+
+```bash
+# 1. Install flyctl (https://fly.io/docs/flyctl/install/) and log in
+fly auth login
+
+# 2. Pick a unique app name and put it in fly.toml (app = "..."), then create the app
+fly apps create goblin-notetaker
+
+# 3. Storage for the bot's login + meeting notes
+fly volumes create notetaker_data --region dfw --size 3
+
+# 4. Secrets (never commit these)
+fly secrets set \
+  DEEPGRAM_API_KEY=... \
+  ANTHROPIC_API_KEY=... \
+  SERVER_TOKEN=$(openssl rand -hex 24) \
+  SLACK_WEBHOOK_URL=...            # optional
+
+# 5. Build and deploy
+fly deploy
+```
+
+Check it's up with `curl https://goblin-notetaker.fly.dev/health`. To see the `SERVER_TOKEN` you generated, run `fly ssh console -C 'printenv SERVER_TOKEN'`, and share it with your team.
+
+### Sign the bot into Google (once)
+
+Zoom works without this, and so do Meet calls that allow guests. Signing in makes Meet much more reliable. The server has no screen, so you drive its Chrome from your own:
+
+```bash
+# Terminal 1: open Chrome on the server
+fly ssh console
+cd /app && xvfb-run -a node dist/scripts/remote-login.js        # add "zoom" for a Zoom account
+
+# Terminal 2: tunnel to it
+fly proxy 9223
+```
+
+Then, in your own Chrome:
+
+1. Open `chrome://inspect` and click **Configure…**.
+2. Add `localhost:9223`.
+3. Click **inspect** under the page that appears. You'll get a live, clickable view of the server's browser.
+4. Sign in to the bot's Google account there.
+5. Go back to terminal 1 and press **Ctrl+C**. The login is saved to `/data/profile` and survives deploys.
+
+The DevTools port is only reachable through `fly proxy` on your authenticated Fly account. It's never exposed publicly.
+
+### Auto-deploy from GitHub
+
+`.github/workflows/fly-deploy.yml` runs the typecheck and tests on every push to `main`, then deploys. To turn it on:
+
+1. Run `fly tokens create deploy`.
+2. Save the output as a repository secret named `FLY_API_TOKEN` (GitHub → Settings → Secrets and variables → Actions).
+
+Until that secret exists, the workflow runs the tests and skips the deploy.
+
+### Useful commands
+
+```bash
+fly logs                                   # watch the bot join, record, summarize
+fly ssh console -C "ls /data/meetings"     # list saved meetings
+fly ssh sftp get /data/meetings/<folder>/summary.md
+fly scale memory 4096                      # more simultaneous meetings
+```
+
+## Other hosts
+
+Any always-on Docker host works (a VPS, Railway, and so on):
 
 ```bash
 docker build -t meet-notetaker .
-docker run -d -p 8080:8080 --env-file .env -v notetaker-data:/data meet-notetaker
+docker run -d -p 8080:8080 --shm-size=1g --env-file .env -v notetaker-data:/data meet-notetaker
 ```
-
-To get the bot's logins onto the server, run `npm run login` (and `npm run login -- zoom` if needed) on your laptop, then copy `.bot-profile/` into the volume as `/data/profile`.
 
 ## Configuration
 
