@@ -21,10 +21,12 @@ export const config = {
 
   deepgramKey: process.env.DEEPGRAM_API_KEY ?? '',
   deepgramModel: process.env.DEEPGRAM_MODEL ?? 'nova-3',
-  anthropicKey: process.env.ANTHROPIC_API_KEY ?? '',
-  claudeModel: process.env.CLAUDE_MODEL ?? 'claude-sonnet-5-5',
+  // Meeting notes are written by a Fireworks-hosted model.
+  fireworksKey: process.env.FIREWORKS_API_KEY ?? '',
+  fireworksModel: process.env.FIREWORKS_MODEL || 'accounts/fireworks/models/deepseek-v4p1-flash',
 
   slackWebhook: process.env.SLACK_WEBHOOK_URL ?? '',
   serverPort: num('PORT', 8080),
+  // Optional. Empty = the dashboard is open to anyone with the link; set it to require an access code.
   serverToken: process.env.SERVER_TOKEN ?? '',
 };

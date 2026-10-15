@@ -570,8 +570,12 @@ async function start() {
   $('#login').hidden = true;
   $('#app').hidden = false;
   try {
-    // Show the name the bot actually joins calls with (BOT_NAME on the server).
-    api('/api/me').then((me) => { if (me.botName) $('#bot-name').textContent = me.botName; }, () => {});
+    // Show the name the bot actually joins calls with (BOT_NAME on the server), and hide
+    // "Sign out" when the server doesn't use an access code.
+    api('/api/me').then((me) => {
+      if (me.botName) $('#bot-name').textContent = me.botName;
+      $('#sign-out').hidden = !!me.open;
+    }, () => {});
     await Promise.all([loadMeetings(), poll()]);
     await route();
   } catch (e) {
@@ -579,8 +583,13 @@ async function start() {
   }
 }
 
-if (store.get()) {
-  api('/api/me').then(start, (e) => showLogin(e instanceof AuthError ? null : `Couldn’t reach the server: ${e.message}`));
-} else {
-  showLogin();
-}
+// Ask the server whether we're allowed in. With no access code configured it says yes
+// straight away and the sign-in screen never appears.
+api('/api/me').then(start, (e) => {
+  if (e instanceof AuthError) {
+    if (store.get()) store.clear(); // a saved code that no longer works
+    showLogin();
+  } else {
+    showLogin(`Couldn’t reach the server: ${e.message}`);
+  }
+});

@@ -1,16 +1,16 @@
 # Meet Notetaker
 
-A self-hosted notetaker bot for **Google Meet and Zoom**. It joins a call as a participant, records everyone's audio, and when the call ends it produces a speaker-labelled transcript and a Claude-written summary (TL;DR, decisions, action items, open questions). It can also post the summary to Slack.
+A self-hosted notetaker bot for **Google Meet and Zoom**. It joins a call as a participant, records everyone's audio, and when the call ends it produces a speaker-labelled transcript and an AI-written summary from a Fireworks-hosted model (TL;DR, decisions, action items, open questions). It can also post the summary to Slack.
 
 ```
 Meet / Zoom link ──▶ pick platform adapter ──▶ Chrome (Playwright) joins the call
                  ──▶ in-page hook mixes all remote audio ──▶ MediaRecorder ──▶ audio.webm
-                 ──▶ Deepgram (diarized) ──▶ transcript.txt ──▶ Claude ──▶ summary.md ──▶ Slack
+                 ──▶ Deepgram (diarized) ──▶ transcript.txt ──▶ Fireworks LLM ──▶ summary.md ──▶ Slack
 ```
 
 ## Dashboard
 
-The server includes a web dashboard at its root URL (on Fly, `https://<your-app>.fly.dev`). Sign in with the team access code, which is the `SERVER_TOKEN` value, and you can:
+The server includes a web dashboard at its root URL (on Fly, `https://<your-app>.fly.dev`). By default it opens straight away with no sign-in (see **Access** below). From it you can:
 
 - **Send the notetaker:** paste a Meet or Zoom link. A passcode box appears for Zoom links that don't include one.
 - **Watch live bots:** each bot shows whether it's waiting to be let in, in the call (with a running clock), or writing the notes. Use **Make it leave** to end early; it still writes notes for what it heard.
@@ -19,12 +19,37 @@ The server includes a web dashboard at its root URL (on Fly, `https://<your-app>
 
 Run it locally with `npm run dev`, then open http://localhost:8080. The dashboard is plain HTML, CSS and JS in `public/`, with no build step, and the fonts are self-hosted.
 
+
+### Access
+
+With no `SERVER_TOKEN` set (the default), the dashboard and API are **open to anyone who has the URL**. That's convenient, but anyone who finds the link can read every meeting's notes, transcript and recording, and can send the bot into calls on your API credits. Keep the URL within the team.
+
+To require a sign-in later, set an access code. No code change or redeploy of new code is needed:
+
+```bash
+fly secrets set SERVER_TOKEN=$(openssl rand -hex 24)
+```
+
+The dashboard then asks for that code once per browser, and API calls need `-H "Authorization: Bearer $SERVER_TOKEN"`. To open it up again, run `fly secrets unset SERVER_TOKEN`.
+
+### Summary model (Fireworks)
+
+Notes are written by a model on [Fireworks](https://fireworks.ai), set with `FIREWORKS_MODEL` (a full model ID). The default is **DeepSeek V4.1 Flash** (`accounts/fireworks/models/deepseek-v4p1-flash`): a strong general model with a 1M-token context, so even a 3-hour meeting fits in one request, at well under a cent per meeting. Other good choices:
+
+| Model | ID | When to use it |
+|---|---|---|
+| DeepSeek V4.1 Flash (default) | `accounts/fireworks/models/deepseek-v4p1-flash` | Best balance of quality and cost |
+| GLM 5.3 Flash | `accounts/fireworks/models/glm-5p3-flash` | Cheapest; fine for routine stand-ups |
+| GLM 5.3 | `accounts/fireworks/models/glm-5p3` | Higher quality for long, dense meetings |
+
+Change it with `fly secrets set FIREWORKS_MODEL=<id>`, then use **Try again** on any meeting to compare the notes. Check current prices on Fireworks' pricing page, since they change.
+
 ## Quick start (your laptop)
 
 ```bash
 npm install
 npx playwright install chromium
-cp .env.example .env          # add DEEPGRAM_API_KEY and ANTHROPIC_API_KEY
+cp .env.example .env          # add DEEPGRAM_API_KEY and FIREWORKS_API_KEY
 npm run login                 # sign in to the bot's Google account in the window, then close it
 
 npm run join -- https://meet.google.com/abc-defg-hij
@@ -69,17 +94,17 @@ Both sessions live in `.bot-profile/`. Treat that folder like a password and kee
 
 ```bash
 curl -X POST http://HOST:8080/join \
-  -H "Authorization: Bearer $SERVER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://meet.google.com/abc-defg-hij"}'
 
 # Zoom; "passcode" is only needed when the link has no pwd=
 curl -X POST http://HOST:8080/join \
-  -H "Authorization: Bearer $SERVER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://zoom.us/j/1234567890","passcode":"123456"}'
 
-curl -H "Authorization: Bearer $SERVER_TOKEN" http://HOST:8080/jobs
+curl http://HOST:8080/jobs
+
+# If you set SERVER_TOKEN, add: -H "Authorization: Bearer $SERVER_TOKEN"
 ```
 
 Each `/join` starts its own browser on a temporary copy of the bot's login profile, so several meetings can run at once. Budget roughly 1 vCPU and 1 GB of RAM per concurrent meeting.
@@ -103,15 +128,14 @@ fly volumes create notetaker_data --region dfw --size 3
 # 4. Secrets (never commit these)
 fly secrets set \
   DEEPGRAM_API_KEY=... \
-  ANTHROPIC_API_KEY=... \
-  SERVER_TOKEN=$(openssl rand -hex 24) \
+  FIREWORKS_API_KEY=... \
   SLACK_WEBHOOK_URL=...            # optional
 
 # 5. Build and deploy
 fly deploy
 ```
 
-Check it's up with `curl https://lantern-notetaker.fly.dev/health`. To see the `SERVER_TOKEN` you generated, run `fly ssh console -C 'printenv SERVER_TOKEN'`, and share it with your team.
+Check it's up with `curl https://lantern-notetaker.fly.dev/health`, then open `https://lantern-notetaker.fly.dev` to use the dashboard.
 
 ### Sign the bot into Google (once)
 
@@ -209,7 +233,7 @@ npx tsx test/capture.integration.ts   # audio hook: WebRTC, WebAudio-in-iframe, 
 
 - **The meeting UIs change.** Joining and end-of-call detection rely on button labels ("Join now", "Leave call", "Join Audio by Computer", "Leave") and similar markers. When Google or Zoom changes them, update the selectors in that platform's adapter file. This is the main maintenance cost of a self-built bot.
 - **English UI only** for now, because selectors match English labels. Set the bot accounts' language to English.
-- **Speaker names** are "Speaker 1, 2…" from diarization. Claude replaces them with real names only when the conversation makes it obvious.
+- **Speaker names** are "Speaker 1, 2…" from diarization. The summary model replaces them with real names only when the conversation makes it obvious.
 - **Calendar auto-join** isn't built yet. The natural next step is to poll the bot account's calendar and call `runMeeting()` a minute before each event that has a Meet or Zoom link.
 - **Zoom's official route.** Zoom expects bots to use its Meeting SDK, which requires registering an app with Zoom. The web-client approach here needs no approval but is less officially supported. If you ever ship this to customers, move the Zoom adapter to the Meeting SDK.
 - **Consent and terms.** The bot shows up as a visible participant, but tell your team it records, and say so in any meeting with outside guests. Recording-consent laws vary by state and country. Automated joining may also conflict with Google's and Zoom's terms, so use it for your own team's meetings.

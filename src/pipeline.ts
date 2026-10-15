@@ -24,7 +24,7 @@ async function postToSlack(title: string, summary: string) {
   if (!res.ok) log('Slack post failed:', res.status, await res.text());
 }
 
-/** Splits Claude's "# Title" first line off the rest of the notes. */
+/** Splits the model's "# Title" first line off the rest of the notes. */
 export function splitTitle(markdown: string): { title: string | null; body: string } {
   const m = markdown.match(/^\s*#\s+(.+)\n+/);
   return m ? { title: m[1].trim(), body: markdown.slice(m[0].length).trim() } : { title: null, body: markdown.trim() };

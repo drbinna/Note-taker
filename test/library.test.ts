@@ -21,7 +21,7 @@ before(() => {
 });
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-test('splitTitle separates Claude\'s "# Title" line from the notes', () => {
+test('splitTitle separates the model\'s "# Title" line from the notes', () => {
   assert.deepEqual(splitTitle('# Q4 plan\n\n## TL;DR\nHi'), { title: 'Q4 plan', body: '## TL;DR\nHi' });
   assert.deepEqual(splitTitle('## TL;DR\nNo title'), { title: null, body: '## TL;DR\nNo title' });
 });

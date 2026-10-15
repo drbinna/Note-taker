@@ -1,5 +1,6 @@
 // HTTP server: the team dashboard (public/) plus the JSON API it uses.
-// Every /api route needs `Authorization: Bearer $SERVER_TOKEN`; the dashboard asks for it once.
+// Access: with no SERVER_TOKEN set, everything is open. If SERVER_TOKEN is set, every /api route
+// needs `Authorization: Bearer $SERVER_TOKEN` and the dashboard asks for it once.
 //
 //   POST /api/join            {"url": "<Meet or Zoom link>", "passcode"?: "123456"}
 //   GET  /api/jobs            bots running now and recently finished
@@ -91,8 +92,9 @@ function readBody(req: http.IncomingMessage): Promise<string> {
   });
 }
 
+/** No SERVER_TOKEN set = open dashboard (anyone with the link). Set it to require an access code. */
 function authorized(req: http.IncomingMessage): boolean {
-  if (!config.serverToken) return false;
+  if (!config.serverToken) return true;
   const got = Buffer.from(String(req.headers.authorization ?? ''));
   const want = Buffer.from(`Bearer ${config.serverToken}`);
   return got.length === want.length && timingSafeEqual(got, want);
@@ -158,7 +160,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/api/') || pathname === '/join' || pathname === '/jobs' || pathname.startsWith('/jobs/')) {
     if (!authorized(req)) return send(res, 401, { error: 'Wrong or missing access code.' });
 
-    if (method === 'GET' && pathname === '/api/me') return send(res, 200, { ok: true, botName: config.botName });
+    if (method === 'GET' && pathname === '/api/me') return send(res, 200, { ok: true, botName: config.botName, open: !config.serverToken });
     if (method === 'POST' && (pathname === '/api/join' || pathname === '/join')) return handleJoin(req, res);
     if (method === 'GET' && (pathname === '/api/jobs' || pathname === '/jobs')) return send(res, 200, visibleJobs());
 
@@ -216,5 +218,5 @@ const server = http.createServer(async (req, res) => {
   sendFile(res, file, { cache: !file.endsWith('.html') });
 });
 
-if (!config.serverToken) console.warn('SERVER_TOKEN is empty — the dashboard and API will reject everyone until you set it.');
+if (!config.serverToken) console.warn('SERVER_TOKEN is not set: the dashboard is open to anyone with the link. Set SERVER_TOKEN to require an access code.');
 server.listen(config.serverPort, () => console.log(`notetaker dashboard on http://localhost:${config.serverPort}`));
