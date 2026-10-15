@@ -3,3 +3,8 @@ dist
 .env
 .bot-profile
 meetings
+.env.*
+!.env.example
+secrets.*
+*.pem
+*.key
