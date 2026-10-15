@@ -1,7 +1,7 @@
-// Goblin Notes dashboard. No framework; all text goes through DOM text nodes (never innerHTML).
+// Lantern Notes dashboard. No framework; all text goes through DOM text nodes (never innerHTML).
 
 const $ = (sel) => document.querySelector(sel);
-const TOKEN_KEY = 'goblin-notes-token';
+const TOKEN_KEY = 'lantern-notes-token';
 
 // ---------- tiny DOM helper ----------
 function h(tag, attrs = {}, ...children) {
@@ -570,6 +570,8 @@ async function start() {
   $('#login').hidden = true;
   $('#app').hidden = false;
   try {
+    // Show the name the bot actually joins calls with (BOT_NAME on the server).
+    api('/api/me').then((me) => { if (me.botName) $('#bot-name').textContent = me.botName; }, () => {});
     await Promise.all([loadMeetings(), poll()]);
     await route();
   } catch (e) {

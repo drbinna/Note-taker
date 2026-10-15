@@ -32,7 +32,7 @@ npm run join -- "https://zoom.us/j/1234567890?pwd=AbCdEf"          # quote Zoom 
 npm run join -- https://zoom.us/j/1234567890 --passcode 123456      # Zoom link with no pwd= in it
 ```
 
-Admit "Goblin Notetaker" when it knocks. When everyone else leaves (or the call ends), the bot leaves and writes everything to `meetings/<timestamp>_<meeting id>/`:
+Admit "Lantern Notetaker" when it knocks. When everyone else leaves (or the call ends), the bot leaves and writes everything to `meetings/<timestamp>_<meeting id>/`:
 
 | File | What it is |
 |---|---|
@@ -95,7 +95,7 @@ The bot needs a long-running machine with a (virtual) display, so serverless hos
 fly auth login
 
 # 2. Pick a unique app name and put it in fly.toml (app = "..."), then create the app
-fly apps create goblin-notetaker
+fly apps create lantern-notetaker
 
 # 3. Storage for the bot's login + meeting notes
 fly volumes create notetaker_data --region dfw --size 3
@@ -111,7 +111,7 @@ fly secrets set \
 fly deploy
 ```
 
-Check it's up with `curl https://goblin-notetaker.fly.dev/health`. To see the `SERVER_TOKEN` you generated, run `fly ssh console -C 'printenv SERVER_TOKEN'`, and share it with your team.
+Check it's up with `curl https://lantern-notetaker.fly.dev/health`. To see the `SERVER_TOKEN` you generated, run `fly ssh console -C 'printenv SERVER_TOKEN'`, and share it with your team.
 
 ### Sign the bot into Google (once)
 

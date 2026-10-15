@@ -1,6 +1,6 @@
 # Fly.io config for the notetaker bot.
 # Change `app` to a name of your own before the first `fly launch` / `fly deploy` (it must be globally unique).
-app = "goblin-notetaker"
+app = "lantern-notetaker"
 primary_region = "dfw"   # Dallas, the closest region to Tulsa
 
 [build]
@@ -11,7 +11,7 @@ primary_region = "dfw"   # Dallas, the closest region to Tulsa
   PROFILE_DIR = "/data/profile"
   OUTPUT_DIR = "/data/meetings"
   HEADLESS = "false"
-  BOT_NAME = "Goblin Notetaker"
+  BOT_NAME = "Lantern Notetaker"
 
 # Bot login profile + recordings/summaries survive deploys and restarts.
 [mounts]

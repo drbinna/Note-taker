@@ -7,7 +7,7 @@ function num(name: string, fallback: number): number {
 }
 
 export const config = {
-  botName: process.env.BOT_NAME ?? 'Notetaker',
+  botName: process.env.BOT_NAME ?? 'Lantern Notetaker',
   // Chrome profile the bot reuses, so it stays signed in to its Google account.
   profileDir: path.resolve(process.env.PROFILE_DIR ?? '.bot-profile'),
   outputDir: path.resolve(process.env.OUTPUT_DIR ?? 'meetings'),

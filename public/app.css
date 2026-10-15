@@ -1,4 +1,4 @@
-/* Goblin Notes dashboard */
+/* Lantern Notes dashboard */
 
 @font-face {
   font-family: "Bricolage Grotesque";
@@ -27,21 +27,21 @@
 }
 
 :root {
-  --bg: #eef1ec;          /* lichen */
-  --surface: #f8faf6;
-  --surface-2: #e4e9e1;
-  --line: #d3dbd1;
-  --ink: #1f2a24;         /* moss ink */
-  --muted: #5a6a60;
-  --accent: #3e7b5b;      /* moss */
-  --accent-hover: #336a4d;
+  --bg: #edf0f5;          /* early-morning sky */
+  --surface: #f9fafc;
+  --surface-2: #e2e7f0;
+  --line: #d2d9e5;
+  --ink: #18213a;         /* night navy */
+  --muted: #576178;
+  --accent: #2b4fcb;      /* cobalt, from the station's light ring */
+  --accent-hover: #213fa8;
   --accent-ink: #ffffff;
-  --accent-soft: #dcebe1;
-  --live: #b9861f;        /* brass: only while recording */
-  --live-soft: #f4e8c8;
+  --accent-soft: #dfe6fa;
+  --live: #b9861f;        /* lantern glow: only while recording */
+  --live-soft: #f6eacb;
   --danger: #a8402f;
   --danger-soft: #f6e0db;
-  --focus: #2f6fd0;
+  --focus: #93680f;       /* amber ring, distinct from cobalt buttons */
 
   --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --text: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
@@ -54,21 +54,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131915;
-    --surface: #1a221d;
-    --surface-2: #222c26;
-    --line: #2d3a32;
-    --ink: #e2e9e1;
-    --muted: #97a79c;
-    --accent: #72b28e;
-    --accent-hover: #86c2a0;
-    --accent-ink: #0f1a13;
-    --accent-soft: #23362b;
-    --live: #e2b455;
-    --live-soft: #3a2f15;
+    --bg: #0f1320;
+    --surface: #161b2b;
+    --surface-2: #1f2538;
+    --line: #2a3249;
+    --ink: #e4e8f2;
+    --muted: #98a2b9;
+    --accent: #8aa4ff;
+    --accent-hover: #a5b8ff;
+    --accent-ink: #0c1228;
+    --accent-soft: #1f2a4f;
+    --live: #f2b544;
+    --live-soft: #3b2f14;
     --danger: #e58373;
     --danger-soft: #3c211c;
-    --focus: #7fb0ff;
+    --focus: #f2b544;
     color-scheme: dark;
   }
 }

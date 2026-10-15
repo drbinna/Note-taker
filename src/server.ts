@@ -158,7 +158,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/api/') || pathname === '/join' || pathname === '/jobs' || pathname.startsWith('/jobs/')) {
     if (!authorized(req)) return send(res, 401, { error: 'Wrong or missing access code.' });
 
-    if (method === 'GET' && pathname === '/api/me') return send(res, 200, { ok: true });
+    if (method === 'GET' && pathname === '/api/me') return send(res, 200, { ok: true, botName: config.botName });
     if (method === 'POST' && (pathname === '/api/join' || pathname === '/join')) return handleJoin(req, res);
     if (method === 'GET' && (pathname === '/api/jobs' || pathname === '/jobs')) return send(res, 200, visibleJobs());
 
