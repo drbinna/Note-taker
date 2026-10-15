@@ -5,7 +5,8 @@ A self-hosted notetaker bot for **Google Meet and Zoom**. It joins a call as a p
 ```
 Meet / Zoom link ──▶ pick platform adapter ──▶ Chrome (Playwright) joins the call
                  ──▶ in-page hook mixes all remote audio ──▶ MediaRecorder ──▶ audio.webm
-                 ──▶ Deepgram (diarized) ──▶ transcript.txt ──▶ Fireworks LLM ──▶ summary.md ──▶ Slack
+                 ──▶ ffmpeg (mp3) ──▶ Fireworks Whisper (speaker labels) ──▶ transcript.txt
+                 ──▶ Fireworks LLM ──▶ summary.md ──▶ Slack
 ```
 
 ## Dashboard
@@ -32,9 +33,13 @@ fly secrets set SERVER_TOKEN=$(openssl rand -hex 24)
 
 The dashboard then asks for that code once per browser, and API calls need `-H "Authorization: Bearer $SERVER_TOKEN"`. To open it up again, run `fly secrets unset SERVER_TOKEN`.
 
-### Summary model (Fireworks)
+### Fireworks models
 
-Notes are written by a model on [Fireworks](https://fireworks.ai), set with `FIREWORKS_MODEL` (a full model ID). The default is **DeepSeek V4.1 Flash** (`accounts/fireworks/models/deepseek-v4p1-flash`): a strong general model with a 1M-token context, so even a 3-hour meeting fits in one request, at well under a cent per meeting. Other good choices:
+One Fireworks API key covers both steps.
+
+**Transcripts:** Fireworks' Whisper v3 with speaker diarization. Each recording is converted to a small mono mp3 with ffmpeg first, because Fireworks doesn't list WebM as an input format. Set `FIREWORKS_ASR_MODEL=whisper-v3-turbo` for faster, cheaper transcripts at a small cost in accuracy.
+
+**Notes:** written by a model set with `FIREWORKS_MODEL` (a full model ID). The default is **DeepSeek V4.1 Flash** (`accounts/fireworks/models/deepseek-v4p1-flash`): a strong general model with a 1M-token context, so even a 3-hour meeting fits in one request, at well under a cent per meeting. Other good choices:
 
 | Model | ID | When to use it |
 |---|---|---|
@@ -48,8 +53,8 @@ Change it with `fly secrets set FIREWORKS_MODEL=<id>`, then use **Try again** on
 
 ```bash
 npm install
-npx playwright install chromium
-cp .env.example .env          # add DEEPGRAM_API_KEY and FIREWORKS_API_KEY
+npx playwright install chromium   # and install ffmpeg, e.g. brew install ffmpeg
+cp .env.example .env          # add FIREWORKS_API_KEY (it covers transcripts and notes)
 npm run login                 # sign in to the bot's Google account in the window, then close it
 
 npm run join -- https://meet.google.com/abc-defg-hij
@@ -127,7 +132,6 @@ fly volumes create notetaker_data --region dfw --size 3
 
 # 4. Secrets (never commit these)
 fly secrets set \
-  DEEPGRAM_API_KEY=... \
   FIREWORKS_API_KEY=... \
   SLACK_WEBHOOK_URL=...            # optional
 
