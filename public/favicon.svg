@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A goblin ear with a quill: the notetaker -->
+  <rect width="64" height="64" rx="16" fill="#3E7B5B"/>
+  <path d="M19 47c-3-9 0-21 9-28l3 9c4-6 11-10 18-10-3 8-8 14-14 17l6 3c-7 7-15 10-22 9z" fill="#EEF1EC"/>
+  <path d="M27 41c6-5 12-11 18-19" stroke="#3E7B5B" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+  <circle cx="22" cy="49" r="3" fill="#C9962B"/>
+</svg>

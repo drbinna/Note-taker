@@ -8,6 +8,17 @@ Meet / Zoom link ──▶ pick platform adapter ──▶ Chrome (Playwright) j
                  ──▶ Deepgram (diarized) ──▶ transcript.txt ──▶ Claude ──▶ summary.md ──▶ Slack
 ```
 
+## Dashboard
+
+The server includes a web dashboard at its root URL (on Fly, `https://<your-app>.fly.dev`). Sign in with the team access code, which is the `SERVER_TOKEN` value, and you can:
+
+- **Send the notetaker:** paste a Meet or Zoom link. A passcode box appears for Zoom links that don't include one.
+- **Watch live bots:** each bot shows whether it's waiting to be let in, in the call (with a running clock), or writing the notes. Use **Make it leave** to end early; it still writes notes for what it heard.
+- **Read past meetings:** they're grouped by day and searchable. Each has its notes, with timestamps that jump to that moment in the transcript, a searchable transcript, the recording, and downloads.
+- **Retry failed meetings:** **Try again** re-runs the transcript and notes from the saved recording.
+
+Run it locally with `npm run dev`, then open http://localhost:8080. The dashboard is plain HTML, CSS and JS in `public/`, with no build step, and the fonts are self-hosted.
+
 ## Quick start (your laptop)
 
 ```bash

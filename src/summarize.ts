@@ -6,7 +6,8 @@ The transcript comes from automatic speech recognition with generic speaker labe
 Only replace a label with a real name when the transcript makes it clear (someone is addressed by name, introduces themselves, etc.); otherwise keep the label.
 Be concrete and brief. Never invent decisions, owners or dates that are not in the transcript.
 
-Return Markdown with exactly these sections:
+Return Markdown. The first line is "# " followed by a 3–7 word title saying what the meeting was about (e.g. "# Q4 launch plan and hiring"), not the date or platform.
+Then exactly these sections:
 ## TL;DR
 2–4 sentences.
 ## Decisions

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Goblin Notes</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/bricolage-grotesque-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/atkinson-hyperlegible-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to meetings</a>
+
+  <!-- Sign-in -->
+  <section id="login" class="login" hidden>
+    <form id="login-form" class="login-card">
+      <div class="wordmark wordmark-lg"><img src="/favicon.svg" alt="" width="34" height="34">Goblin Notes</div>
+      <p class="login-lede">Your team's meeting notes, written by the notetaker bot.</p>
+      <label for="code">Team access code</label>
+      <input id="code" name="code" type="password" autocomplete="current-password" required>
+      <p id="login-error" class="field-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn-primary">Open dashboard</button>
+      <p class="hint">The access code is the <code>SERVER_TOKEN</code> set on the server.</p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app" class="shell" hidden>
+    <header class="topbar">
+      <a href="#/" class="wordmark"><img src="/favicon.svg" alt="" width="28" height="28">Goblin Notes</a>
+      <button id="sign-out" class="btn btn-quiet" type="button">Sign out</button>
+    </header>
+
+    <form id="send-form" class="send" novalidate>
+      <label for="link" class="send-label">Send the notetaker to a call</label>
+      <div class="send-row">
+        <input id="link" name="link" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+               placeholder="Paste a Google Meet or Zoom link" required>
+        <input id="passcode" name="passcode" type="text" inputmode="numeric" autocomplete="off"
+               placeholder="Zoom passcode" aria-label="Zoom passcode" hidden>
+        <button type="submit" class="btn btn-primary" id="send-btn">Send notetaker</button>
+      </div>
+      <p id="send-hint" class="hint">It joins as “Goblin Notetaker”. Let it in from the waiting room, and it leaves on its own when the call ends.</p>
+      <p id="send-error" class="field-error" role="alert" hidden></p>
+    </form>
+
+    <section id="live" class="live" aria-label="Notetakers in calls" aria-live="polite" hidden></section>
+
+    <main id="main" class="main">
+      <aside class="list-pane" aria-label="Meetings">
+        <div class="list-head">
+          <h2>Meetings</h2>
+          <input id="filter" type="search" placeholder="Search notes" aria-label="Search meetings">
+        </div>
+        <nav id="meeting-list" class="meeting-list"></nav>
+      </aside>
+      <article id="detail" class="detail" tabindex="-1"></article>
+    </main>
+  </div>
+</body>
+</html>

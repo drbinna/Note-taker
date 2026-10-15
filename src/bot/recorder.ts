@@ -40,7 +40,27 @@ async function pickRecordingFrame(page: Page, waitMs: number): Promise<Frame> {
   }
 }
 
-export async function recordMeeting(url: string, workDir: string, opts: JoinOptions = {}): Promise<RecordingResult> {
+export type Stage = 'joining' | 'recording' | 'transcribing' | 'summarizing';
+
+export interface RecordHooks {
+  onStage?: (stage: Stage) => void;
+  /** Abort to make the bot leave now (or give up waiting in the lobby). */
+  signal?: AbortSignal;
+}
+
+/** Sleeps, but wakes early if the signal is aborted. */
+function wait(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    if (signal?.aborted) return resolve();
+    const t = setTimeout(done, ms);
+    function done() { clearTimeout(t); signal?.removeEventListener('abort', done); resolve(); }
+    signal?.addEventListener('abort', done, { once: true });
+  });
+}
+
+export async function recordMeeting(url: string, workDir: string, opts: JoinOptions = {}, hooks: RecordHooks = {}): Promise<RecordingResult> {
+  const { onStage, signal } = hooks;
+  if (signal?.aborted) throw new Error('Stopped before joining.');
   const platform = detectPlatform(url);
   if (!platform) throw new Error(`Unsupported meeting link: ${url}`);
 
@@ -54,8 +74,13 @@ export async function recordMeeting(url: string, workDir: string, opts: JoinOpti
   const participants = new Set<string>();
   let endReason = 'unknown';
   const startedAt = new Date();
+  let recording = false;
+  // Stopping while still in the lobby: closing the browser makes the join step fail fast.
+  const abortWhileJoining = () => { if (!recording) void browser.close(); };
+  signal?.addEventListener('abort', abortWhileJoining, { once: true });
 
   try {
+    onStage?.('joining');
     const origin = new URL(platform.browserUrl(url)).origin;
     await context.grantPermissions(['microphone', 'camera'], { origin }).catch(() => {});
     await context.exposeFunction('__notetakerChunk', (b64: string) => {
@@ -67,19 +92,28 @@ export async function recordMeeting(url: string, workDir: string, opts: JoinOpti
     await context.addInitScript({ path: CAPTURE_SCRIPT });
 
     const page = context.pages()[0] ?? (await context.newPage());
-    await platform.join(page, url, opts);
-    await platform.afterJoin?.(page);
+    try {
+      await platform.join(page, url, opts);
+      await platform.afterJoin?.(page);
+    } catch (err) {
+      if (signal?.aborted) throw new Error('Stopped before the bot was admitted.');
+      throw err;
+    }
+    if (signal?.aborted) throw new Error('Stopped before the bot was admitted.');
     log(`${platform.name}: in the call`);
 
     const frame = await pickRecordingFrame(page, 30_000);
     await frame.evaluate(() => (window as any).__notetaker.start());
+    recording = true;
+    onStage?.('recording');
     log('recording');
 
     let aloneSince: number | null = null;
     const hardStop = Date.now() + config.maxDurationMs;
 
     while (true) {
-      await sleep(5000);
+      await wait(5000, signal);
+      if (signal?.aborted) { endReason = 'stopped from the dashboard'; break; }
       (await platform.participants(page)).forEach((n) => participants.add(n));
 
       if (!(await platform.inCall(page))) { endReason = 'call ended or bot removed'; break; }
@@ -97,6 +131,7 @@ export async function recordMeeting(url: string, workDir: string, opts: JoinOpti
     await frame.evaluate(() => (window as any).__notetaker?.stop()).catch(() => {});
     await platform.leave(page).catch(() => {});
   } finally {
+    signal?.removeEventListener('abort', abortWhileJoining);
     await browser.close();
     await new Promise<void>((r) => out.end(() => r()));
   }
