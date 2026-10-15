@@ -1,9 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Lantern: cobalt tile, a lantern with a warm light inside. Solid shapes so it holds up at 16px. -->
-  <rect width="64" height="64" rx="16" fill="#2B4FCB"/>
-  <path d="M25 17a7 7 0 0 1 14 0" stroke="#F3F5FA" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-  <path d="M20 20h24l-3 5H23z" fill="#F3F5FA"/>
-  <rect x="23" y="25" width="18" height="21" rx="3" fill="#F3F5FA"/>
-  <path d="M32 28.5c3.6 4.6 5 7 5 9.6a5 5 0 0 1-10 0c0-2.6 1.4-5 5-9.6z" fill="#E9A92E"/>
-  <rect x="19" y="47" width="26" height="5" rx="2.5" fill="#F3F5FA"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="130 130 540 540">
+  <!-- Lantern logo mark, cropped for small sizes. Geometry matches the brand file. -->
+  <rect x="130" y="130" width="540" height="540" fill="#000"/>
+  <rect x="241.5" y="174.5" width="102" height="400" fill="#fff"/>
+  <path d="M343.5 468 L557.5 370.3 L557.5 624.7 L343.5 576.5 Z" fill="#9AA0A8"/>
 </svg>
