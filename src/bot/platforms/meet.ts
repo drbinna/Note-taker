@@ -35,7 +35,10 @@ export const meet: Platform = {
       await clickIfVisible(page.locator(`[role="button"][aria-label*="Turn off ${device}" i], button[aria-label*="Turn off ${device}" i]`), 3000);
     }
 
-    const joinButton = page.getByRole('button', { name: /^(join now|ask to join|join anyway|switch here)$/i });
+    // Never "Switch here": when the bot uses the same Google account as someone already in the
+    // call, that button moves their session to the bot and drops them from the meeting.
+    // "Join here too" joins alongside them instead.
+    const joinButton = page.getByRole('button', { name: /^(join here too|join now|ask to join|join anyway)$/i });
     await joinButton.first().waitFor({ state: 'visible', timeout: 30_000 });
     await joinButton.first().click();
     log('meet: requested to join; waiting to be admitted');
