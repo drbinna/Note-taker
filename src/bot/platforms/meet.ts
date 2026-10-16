@@ -37,10 +37,30 @@ export const meet: Platform = {
 
     // Never "Switch here": when the bot uses the same Google account as someone already in the
     // call, that button moves their session to the bot and drops them from the meeting.
-    // "Join here too" joins alongside them instead.
-    const joinButton = page.getByRole('button', { name: /^(join here too|join now|ask to join|join anyway)$/i });
-    await joinButton.first().waitFor({ state: 'visible', timeout: 30_000 });
-    await joinButton.first().click();
+    // In that case Meet hides "Join here too" under "Other ways to join" (as plain text, not a
+    // button), behind a "Switch the call here" tip that has to be dismissed first.
+    await clickIfVisible(page.getByRole('button', { name: /^got it$/i }), 1500);
+    const joinButton = page.getByRole('button', { name: /^(join now|ask to join|join anyway)$/i });
+    const otherWays = page.getByRole('button', { name: /other ways to join/i });
+    const deadlineJoin = Date.now() + 30_000;
+    let joined = false;
+    while (!joined && Date.now() < deadlineJoin) {
+      if (await joinButton.first().isVisible().catch(() => false)) {
+        await joinButton.first().click();
+        joined = true;
+      } else if (await otherWays.first().isVisible().catch(() => false)) {
+        await clickIfVisible(page.getByRole('button', { name: /^got it$/i }), 500);
+        await otherWays.first().click();
+        const hereToo = page.getByText(/^join here too$/i);
+        await hereToo.first().waitFor({ state: 'visible', timeout: 5000 });
+        await hereToo.first().click();
+        log('meet: same account already in the call; used "Join here too"');
+        joined = true;
+      } else {
+        await sleep(1000);
+      }
+    }
+    if (!joined) throw new Error("Couldn't find Meet's join button. The Meet page may have changed.");
     log('meet: requested to join; waiting to be admitted');
 
     const deadline = Date.now() + config.admitTimeoutMs;
