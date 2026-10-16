@@ -143,7 +143,7 @@ Check it's up with `curl https://lantern-notetaker.fly.dev/health`, then open `h
 
 ### Sign the bot into Google (once)
 
-Zoom works without this, and so do Meet calls that allow guests. Signing in makes Meet much more reliable. The server has no screen, so you drive its Chrome from your own:
+Required for Google Meet (it blocks anonymous guests from server browsers). Zoom works without it. The server has no screen, so you drive its Chrome from your own:
 
 ```bash
 # Terminal 1: open Chrome on the server
