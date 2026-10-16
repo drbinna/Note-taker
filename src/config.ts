@@ -19,12 +19,16 @@ export const config = {
   aloneTimeoutMs: num('ALONE_TIMEOUT_SEC', 60) * 1000,
   maxDurationMs: num('MAX_DURATION_MIN', 180) * 60_000,
 
-  // Fireworks does both jobs: transcription (Whisper) and writing the notes (an LLM).
+  // Transcripts: Deepgram (Fireworks retired its audio API in June 2026).
+  deepgramKey: process.env.DEEPGRAM_API_KEY ?? '',
+  deepgramModel: process.env.DEEPGRAM_MODEL || 'nova-3',
+  deepgramUrl: process.env.DEEPGRAM_URL || 'https://api.deepgram.com/v1/listen',
+  // Comma-separated names and terms Deepgram should recognise (people, product, company).
+  deepgramKeyterms: (process.env.DEEPGRAM_KEYTERMS ?? 'Lantern,Lantern Notetaker,Obi')
+    .split(',').map((s) => s.trim()).filter(Boolean),
+
+  // Notes: written by a Fireworks-hosted model.
   fireworksKey: process.env.FIREWORKS_API_KEY ?? '',
-  // whisper-v3 = most accurate; whisper-v3-turbo = faster and cheaper.
-  fireworksAsrModel: process.env.FIREWORKS_ASR_MODEL || 'whisper-v3',
-  // Optional override for the transcription endpoint (normally picked from the model).
-  fireworksAsrUrl: process.env.FIREWORKS_ASR_URL || '',
   fireworksModel: process.env.FIREWORKS_MODEL || 'accounts/fireworks/models/deepseek-v4p1-flash',
 
   slackWebhook: process.env.SLACK_WEBHOOK_URL ?? '',
