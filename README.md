@@ -154,13 +154,15 @@ cd /app && xvfb-run -a node dist/scripts/remote-login.js        # add "zoom" for
 fly proxy 9223
 ```
 
-Then, in your own Chrome:
+The first command prints a link. In your own Chrome:
 
-1. Open `chrome://inspect` and click **Configure…**.
-2. Add `localhost:9223`.
-3. Click **inspect** under the page that appears. You'll get a live, clickable view of the server's browser.
-4. Sign in to the bot's Google account there.
-5. Go back to terminal 1 and press **Ctrl+C**. The login is saved to `/data/profile` and survives deploys.
+1. Open the link it printed (`http://localhost:9223/devtools/inspector.html?ws=…`). You'll get a live, clickable view of the server's browser. If only DevTools panels show, click the screencast icon at the top left.
+2. Sign in to the bot's Google account there.
+3. Go back to terminal 1 and press **Ctrl+C**. The login is saved to `/data/profile` and survives deploys.
+
+Keep `fly proxy` running the whole time; if it stops, the view shows "WebSocket disconnected".
+
+Use a dedicated account for the bot rather than your personal one: the server keeps that account signed in, and Meet shows the account's own name and photo when the bot joins (signed-in users can't pick a different display name). Meet blocks anonymous guests from server browsers ("You can't join this video call"), so this sign-in is required for Google Meet.
 
 The DevTools port is only reachable through `fly proxy` on your authenticated Fly account. It's never exposed publicly.
 

@@ -21,7 +21,9 @@ config.headless = false;
 const browser = await launchBrowser({
   profile: 'shared',
   manualSignals: true,
-  extraArgs: [`--remote-debugging-port=${CHROME_PORT}`],
+  // Newer Chrome rejects DevTools viewers from other origins unless allowed; the port is only
+  // reachable through `fly proxy` on the private network.
+  extraArgs: [`--remote-debugging-port=${CHROME_PORT}`, '--remote-allow-origins=*'],
 });
 const page = browser.context.pages()[0] ?? (await browser.context.newPage());
 await page.goto(target);
@@ -45,14 +47,24 @@ function listen(host: string) {
 }
 listen('::');
 
-function printInstructions() {
+/** Direct link to a live, clickable view of the sign-in page (served by the server's Chrome). */
+async function viewerLink(): Promise<string> {
+  try {
+    const targets: any[] = await (await fetch(`http://127.0.0.1:${CHROME_PORT}/json/list`)).json();
+    const t = targets.find((x) => x.type === 'page' && !String(x.url).startsWith('chrome'));
+    if (t) return `http://localhost:${RELAY_PORT}/devtools/inspector.html?ws=localhost:${RELAY_PORT}/devtools/page/${t.id}`;
+  } catch { /* fall back to chrome://inspect */ }
+  return `chrome://inspect  →  Configure…  →  add localhost:${RELAY_PORT}  →  "inspect"`;
+}
+
+async function printInstructions() {
   console.log(`
 Chrome is open on the server at ${target}
 
 On your laptop:
-  1. Run:  fly proxy ${RELAY_PORT}
-  2. In your own Chrome open chrome://inspect → "Configure…" → add  localhost:${RELAY_PORT}
-  3. Click "inspect" under the page that appears, and sign in to the bot's account there.
+  1. Run (and leave running):  fly proxy ${RELAY_PORT} -a <your-app>
+  2. Open this in Chrome:      ${await viewerLink()}
+  3. Sign in to the bot's account in the page shown on the left.
   4. Come back here and press Ctrl+C to save the login.
 (Gives up after ${TIMEOUT_MIN} minutes.)`);
 }
