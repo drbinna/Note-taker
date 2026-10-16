@@ -75,7 +75,15 @@ export interface RunHooks extends RecordHooks {
 export async function runMeeting(url: string, opts: JoinOptions = {}, hooks: RunHooks = {}) {
   const dir = meetingDir(url);
   hooks.onDir?.(dir);
-  const rec = await recordMeeting(url, dir, opts, hooks);
+  let rec;
+  try {
+    rec = await recordMeeting(url, dir, opts, hooks);
+  } catch (err: any) {
+    // Without this, a failed join leaves the folder looking "in progress" forever.
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'error.txt'), String(err?.message ?? err) + '\n');
+    throw err;
+  }
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ url, ...rec }, null, 2));
   return processAudio(rec.audioPath, rec, hooks);
 }
